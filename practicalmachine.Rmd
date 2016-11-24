@@ -1,0 +1,103 @@
+---
+title: "practical machine learning"
+author: "gargem el hassane"
+date: "23 novembre 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## INTRODUCTION
+this is my final project in practical machine learning giving by johnhopkins university in coursera https://www.coursera.org/specialization/jhudatascience/ it was about learning the essentials of machine learning algorithmes using caret package http://caret.r-forge.r-project.org/ i used R v 3.2 and Rstudio 1.0.44 as an IDE.
+
+## ABSTRACT
+The goal of the project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+
+```{r cars}
+#charging the libraries
+library(ggplot2)
+library(caret)
+library(dplyr)
+
+#download training data
+urltrain = "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+csvfile = download.file(urltrain, "train.csv")
+training = read.csv("train.csv", stringsAsFactors = FALSE)
+
+training$classe = as.factor(training$classe)
+
+
+# download test data
+urltest = "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+testCSV = download.file(urltest, "test.csv")
+testing = read.csv("test.csv", stringsAsFactors = FALSE)
+testing$problem_id = as.factor(testing$problem_id)
+
+#cross validation 
+inTrain = createDataPartition(training$X, p = 0.7, list = FALSE)
+tr = training[inTrain,]
+valid= training[-inTrain,]
+
+#remove first 7 columns from tr
+
+tr = tr[tr$new_window == "no", ]
+tr = tr[, 7:160]
+
+
+#remove variables which have no influence 
+nonZero = nearZeroVar(tr, saveMetrics = TRUE)
+
+#remove these from the data set
+keep = row.names(nonZero[nonZero$nzv == FALSE,])
+
+tr = tr[, keep]
+
+#to have an idea about our training data
+
+
+
+#Summary stats  
+summary(tr)
+
+# use Random forest model to cv
+
+
+modFit = train(classe ~ ., data = tr, method = "rf",
+               trControl = trainControl(method = "cv",
+                                        number = 3,
+                                        allowParallel = TRUE))
+
+
+#predict usiiing the model fit to validation data
+
+predictions = predict(modFit, valid)
+
+
+
+#see the accuracy and kappa to know is our model good or not
+confusionMatrix(predictions, valid$classe)
+
+
+
+
+# 0.99 accuracy whit mean that our model is very good
+
+
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
